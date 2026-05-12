@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-availability-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ha-web
+  template:
+    metadata:
+      labels:
+        app: ha-web
+    spec:
+      affinity:
+        podAntiAffinity:
+          # This "Required" rule ensures pods MUST be on different nodes
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - ha-web
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
