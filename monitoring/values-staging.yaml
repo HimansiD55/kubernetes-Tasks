@@ -1,0 +1,4 @@
+greeting: "Hello Staging!"
+image:
+  tag: "1.1.0"
+replicaCount: 2

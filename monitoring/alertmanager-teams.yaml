@@ -1,0 +1,28 @@
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+
+    route:
+      group_by: ['alertname', 'severity']
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 3h
+      receiver: 'ms-teams'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'ms-teams'
+          continue: true
+        - match:
+            severity: warning
+          receiver: 'ms-teams'
+
+    receivers:
+      - name: 'ms-teams'
+        webhook_configs:
+          - url: 'https://techanek.webhook.office.com/webhookb2/a994fab3-0041-42d8-bcbc-a54ee2946011@862104aa-9916-4eb2-ad69-95e9ec7a16fd/IncomingWebhook/c44d1ef851a543f5863a4496557202ca/29159ed6-1f3e-4d82-96c1-4f3f3ed77390/V2rf7VOCm0lfkpISIV-pUxdVnSSMGU9AfNogCGFhTcF3k1'
+            send_resolved: true
+
+    templates:
+      - '/etc/alertmanager/*.tmpl'

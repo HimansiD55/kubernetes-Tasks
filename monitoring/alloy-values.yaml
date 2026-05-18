@@ -1,0 +1,46 @@
+alloy:
+  configMap:
+    create: true
+    # This is the "River" config that tells Alloy what to do
+    content: |
+      // 1. COLLECT LOGS
+      discovery.kubernetes "pod_logs" {
+        role = "pod"
+      }
+
+      loki.source.kubernetes "local_pods" {
+        targets    = discovery.kubernetes.pod_logs.targets
+        forward_to = [loki.write.local_loki.receiver]
+      }
+
+      // Send logs to your existing Loki
+      loki.write "local_loki" {
+        endpoint {
+          url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }
+
+      // 2. COLLECT METRICS
+      prometheus.scrape "alloy_metrics" {
+        targets = [
+          {"__address__" = "localhost:12345"}, // Scrape Alloy itself
+        ]
+        forward_to = [prometheus.remote_write.local_prom.receiver]
+      }
+
+      // Send metrics to your existing Prometheus
+      prometheus.remote_write "local_prom" {
+        endpoint {
+          url = "http://my-prometheus-server.default.svc.cluster.local/api/v1/write"
+        }
+      }
+
+# Important: Allow Alloy to see the logs on the host machine
+controller:
+  type: daemonset
+
+# Enable volume mounts so Alloy can actually read the log files
+alloy:
+  mounts:
+    varlog: true
+    dockercontainers: true

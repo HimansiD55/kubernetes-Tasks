@@ -1,0 +1,59 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: custom-alerts
+  namespace: default
+  labels:
+    app: prometheus
+    release: my-prometheus
+spec:
+  groups:
+    - name: node-alerts
+      rules:
+
+        # CPU Alert
+        - alert: HighCPUUsage
+          expr: |
+            (
+              1 - avg by (instance) (
+                rate(node_cpu_seconds_total{mode="idle"}[5m])
+              )
+            ) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage on {{ $labels.instance }}"
+            description: "Node {{ $labels.instance }} CPU usage is {{ $value | printf \"%.1f\" }}% which is above 80% for more than 5 minutes."
+
+        # RAM Alert
+        - alert: HighMemoryUsage
+          expr: |
+            (
+              1 - (
+                node_memory_MemAvailable_bytes /
+                node_memory_MemTotal_bytes
+              )
+            ) * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage on {{ $labels.instance }}"
+            description: "Node {{ $labels.instance }} memory usage is {{ $value | printf \"%.1f\" }}% which is above 85% for more than 5 minutes."
+
+        # Disk Alert
+        - alert: HighDiskUsage
+          expr: |
+            (
+              1 - (
+                node_filesystem_avail_bytes{mountpoint="/", fstype!="tmpfs"} /
+                node_filesystem_size_bytes{mountpoint="/", fstype!="tmpfs"}
+              )
+            ) * 100 > 80
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High disk usage on {{ $labels.instance }}"
+            description: "Node {{ $labels.instance }} root filesystem usage is {{ $value | printf \"%.1f\" }}% which is above 80%."

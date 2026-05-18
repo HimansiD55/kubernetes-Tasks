@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-msteams
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-msteams
+  template:
+    metadata:
+      labels:
+        app: prometheus-msteams
+    spec:
+      containers:
+        - name: prometheus-msteams
+          image: quay.io/prometheusmsteams/prometheus-msteams:v1.5.2
+          ports:
+            - containerPort: 2000
+          env:
+            - name: TEAMS_INCOMING_WEBHOOK_URL
+              value: "https://techanek.webhook.office.com/webhookb2/a994fab3-0041-42d8-bcbc-a54ee2946011@862104aa-9916-4eb2-ad69-95e9ec7a16fd/IncomingWebhook/c44d1ef851a543f5863a4496557202ca/29159ed6-1f3e-4d82-96c1-4f3f3ed77390/V2rf7VOCm0lfkpISIV-pUxdVnSSMGU9AfNogCGFhTcF3k1"
+            - name: TEAMS_REQUEST_URI
+              value: "alertmanager"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-msteams
+  namespace: default
+spec:
+  selector:
+    app: prometheus-msteams
+  ports:
+    - port: 2000
+      targetPort: 2000
